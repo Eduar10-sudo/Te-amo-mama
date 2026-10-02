@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Un universo para mamá</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500;1,600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0820;--ink:#fdf3e3;--gold:#ffd89b;--rose:#ff9fb2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:radial-gradient(ellipse at 50% 40%,#241446 0%,#0b0820 70%);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:0;right:0;text-align:center;pointer-events:none;z-index:2}
+#hud h1{font:italic 600 24px/1.1 "Cormorant Garamond",Georgia,serif;margin:0;color:var(--gold)}
+#hud p{margin:6px 0 0;font-size:13px;opacity:.75}
+.p{position:fixed;left:0;top:0;border-radius:50%;border:0;padding:0;cursor:pointer;z-index:3;will-change:transform}
+.p::after{content:attr(data-n);position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;font:600 11px Nunito,sans-serif;color:var(--ink);opacity:.8;white-space:nowrap;text-shadow:0 1px 4px #000}
+.p.done::before{content:"♥";position:absolute;top:-8px;right:-6px;font-size:14px;color:var(--rose);text-shadow:0 0 8px var(--rose)}
+.p.ring i{position:absolute;left:-45%;right:-45%;top:38%;bottom:38%;border:3px solid rgba(255,225,170,.7);border-radius:50%;transform:rotate(-18deg);pointer-events:none}
+#sun{position:fixed;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;border:0;z-index:3;cursor:pointer;background:radial-gradient(circle at 40% 35%,#fff6d6,#ffc66b 55%,#ff8e53);box-shadow:0 0 40px 12px rgba(255,170,90,.55),0 0 110px 40px rgba(255,120,90,.25);animation:pulse 3.2s ease-in-out infinite;font-size:30px;line-height:76px}
+#sun.ready{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.1)}}
+#card{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:26px 24px calc(env(safe-area-inset-bottom,0px) + 24px);background:linear-gradient(180deg,rgba(20,12,44,.92),rgba(12,8,30,.97));backdrop-filter:blur(14px);border-top:1px solid rgba(255,216,155,.35);border-radius:26px 26px 0 0;transform:translateY(105%);transition:transform .55s cubic-bezier(.2,.8,.2,1);max-height:78%;overflow:auto}
+#card.open{transform:none}
+#card h2{font:italic 600 28px/1.1 "Cormorant Garamond",Georgia,serif;margin:0 0 4px;color:var(--c,var(--gold))}
+#card small{opacity:.65;font-size:12px}
+#poem{margin:16px 0 20px;font:italic 500 20px/1.6 "Cormorant Garamond",Georgia,serif}
+#poem span{display:block;opacity:0;transform:translateY(6px);animation:in .9s forwards}
+@keyframes in{to{opacity:1;transform:none}}
+#close{width:100%;padding:13px;border-radius:30px;border:1px solid var(--gold);background:transparent;color:var(--gold);font:600 15px Nunito,sans-serif;cursor:pointer}
+.fl{position:fixed;bottom:-20px;z-index:11;pointer-events:none;color:var(--rose);animation:up linear forwards}
+@keyframes up{to{transform:translateY(-110vh) rotate(40deg);opacity:0}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){#sun{animation:none}.fl{display:none}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hud"><h1>Un universo para ti, mamá</h1><p id="cnt">Toca un planeta · 0 de 6</p></div>
+<button id="sun" aria-label="Sol">☀️</button>
+<div id="card" role="dialog" aria-live="polite"><h2 id="t"></h2><small id="s"></small><div id="poem"></div><button id="close">Seguir viajando</button></div>
+<script>
+var N="mamá";
+var P=[
+{n:"Mercurio",t:"Mis primeros pasos",c:["#e8d8b8","#8a7358"],z:24,f:.28,v:.9,l:["Antes de saber caminar","ya sabía dónde estaban tus manos.","Cada paso torpe que di","fue porque tú me esperabas al otro lado."]},
+{n:"Venus",t:"Tus abrazos",c:["#ffe0a8","#d98a4e"],z:32,f:.4,v:.7,l:["Hay un lugar más cálido que cualquier sol:","el espacio exacto entre tus brazos.","Ahí se curaron mis rodillas, mis miedos","y todos los días malos de mi infancia."]},
+{n:"Tierra",t:"Mi hogar",c:["#9bd6ff","#2f6fb5"],z:34,f:.52,v:.55,l:["Hogar nunca fue una casa.","Fue tu voz diciendo mi nombre desde la cocina,","el olor de lo que cocinabas,","la luz encendida esperándome."]},
+{n:"Marte",t:"Cuando me caí",c:["#ff9a7a","#a8381f"],z:28,f:.65,v:.45,l:["Me caí muchas veces, y en todas","tú estabas ahí para levantarme","sin hacerme sentir pequeño.","Contigo aprendí que ser fuerte","es seguir de pie por amor."]},
+{n:"Júpiter",t:"Tu paciencia gigante",c:["#f2d3a5","#b97a45"],z:50,f:.78,v:.35,l:["Tu paciencia es grande como este planeta.","Me repetiste las cosas mil veces,","me esperaste en mis silencios","y nunca dejaste de creer en mí."]},
+{n:"Saturno",t:"Lo que me enseñaste",c:["#f7e7b4","#c9a24e"],z:38,f:.91,v:.27,ring:1,l:["Me enseñaste a ser amable","aunque nadie me estuviera viendo,","a pedir perdón con el corazón,","a no rendirme y a querer sin medida.","Todo lo bueno que hay en mí","lo aprendí mirándote."]}
+];
+var cv=document.getElementById("cv"),x=cv.getContext("2d"),W,H,D=window.devicePixelRatio||1,st=[],paused=false,vis={},nv=0,cnt=document.getElementById("cnt"),sun=document.getElementById("sun");
+function rs(){W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;x.setTransform(D,0,0,D,0,0);st=[];for(var i=0;i<130;i++)st.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3,p:Math.random()*6})}
+addEventListener("resize",rs);rs();
+P.forEach(function(p,i){
+var b=document.createElement("button");b.className="p"+(p.ring?" ring":"");b.dataset.n=p.n;b.setAttribute("aria-label",p.n+": "+p.t);
+b.style.cssText="width:"+p.z+"px;height:"+p.z+"px;background:radial-gradient(circle at 35% 30%,"+p.c[0]+","+p.c[1]+" 75%);box-shadow:inset -6px -6px 12px rgba(0,0,0,.45),0 0 18px "+p.c[1]+"88";
+if(p.ring)b.innerHTML="<i></i>";
+b.onclick=function(){openCard(p,b)};document.body.appendChild(b);p.el=b;p.a=i*1.1+.4});
+function orb(f){var rx=f*(W/2-34),ry=f*Math.min(H/2-100,(W/2-34)*1.6);return[rx,ry]}
+var last=0;
+function frame(t){var dt=Math.min((t-last)/1000,.05);last=t;x.clearRect(0,0,W,H);
+st.forEach(function(s){x.globalAlpha=.4+.6*Math.abs(Math.sin(t/1200+s.p));x.fillStyle="#fff";x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()});
+x.globalAlpha=1;x.strokeStyle="rgba(255,216,155,.13)";x.lineWidth=1;
+P.forEach(function(p){var o=orb(p.f);x.beginPath();x.ellipse(W/2,H/2,o[0],o[1],0,0,7);x.stroke();
+if(!paused)p.a+=p.v*dt*.35;p.px=W/2+Math.cos(p.a)*o[0];p.py=H/2+Math.sin(p.a)*o[1];
+p.el.style.transform="translate("+(p.px-p.z/2)+"px,"+(p.py-p.z/2)+"px)"});
+requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+var card=document.getElementById("card"),T=document.getElementById("t"),S=document.getElementById("s"),PO=document.getElementById("poem");
+function show(title,sub,lines,col){T.textContent=title;S.textContent=sub;T.style.setProperty("--c",col||"");card.style.setProperty("--c",col||"");PO.innerHTML="";
+lines.forEach(function(l,i){var s=document.createElement("span");s.textContent=l;s.style.animationDelay=(.35+i*.7)+"s";PO.appendChild(s)});
+card.classList.add("open");paused=true}
+function openCard(p,b){show(p.t,p.n,p.l,p.c[0]);if(!vis[p.n]){vis[p.n]=1;nv++;b.classList.add("done");cnt.textContent=nv<6?"Toca un planeta · "+nv+" de 6":"Ya recorriste todo. Toca el Sol ☀️";if(nv==6)sun.classList.add("ready")}}
+sun.onclick=function(){if(nv<6){show("Aún hay más",N,["Recorre primero todos los planetas.","El Sol te espera al final."],"#ffd89b");return}
+show("Feliz cumpleaños, "+N,"Para ti, con todo mi amor",["Los planetas giran y las estrellas se apagan,","pero hay algo que nunca cambia:","tú eres el centro de mi universo.","Gracias por cada día, por cada abrazo,","por todo lo que me diste sin pedir nada.","Te quiero infinito. ♥"],"#ffd89b");hearts()};
+function hearts(){if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;for(var i=0;i<34;i++){var h=document.createElement("div");h.className="fl";h.textContent=["♥","✦","✧"][i%3];h.style.left=Math.random()*100+"%";h.style.fontSize=12+Math.random()*20+"px";h.style.animationDuration=4+Math.random()*4+"s";h.style.animationDelay=Math.random()*2+"s";document.body.appendChild(h);setTimeout(function(e){e.remove()},10500,h)}}
+document.getElementById("close").onclick=function(){card.classList.remove("open");paused=false};
+</script>
+</body>
+</html>
